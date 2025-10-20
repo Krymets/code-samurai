@@ -14,6 +14,14 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
   const clashEffectsRef = useRef([]);
   const prevHpRef = useRef({ player: 0, enemy: 0 });
   const prevAliveRef = useRef({ player: true, enemy: true });
+  const bloodStainsRef = useRef([]);
+  const footprintsRef = useRef([]);
+  const torchesRef = useRef([
+    { x: 50, y: 100, flicker: 0 },
+    { x: 950, y: 100, flicker: 0 },
+    { x: 50, y: 500, flicker: 0 },
+    { x: 950, y: 500, flicker: 0 }
+  ]);
 
   // Initialize battle engine
   useEffect(() => {
@@ -137,30 +145,115 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
     prevHpRef.current = { player: state.player.hp, enemy: state.enemy.hp };
     prevAliveRef.current = { player: state.player.isAlive, enemy: state.enemy.isAlive };
 
-    // Clear canvas with gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(1, '#0f0f1e');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // === BACKGROUND SKY ===
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.6);
+    skyGradient.addColorStop(0, '#1a0f2e');
+    skyGradient.addColorStop(0.5, '#2a1a3e');
+    skyGradient.addColorStop(1, '#3a2a4e');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
 
-    // Draw arena floor pattern
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.width; i += 40) {
+    // === DISTANT MOUNTAINS ===
+    ctx.fillStyle = '#1a1a2a';
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height * 0.5);
+    for (let i = 0; i < canvas.width; i += 100) {
+      ctx.lineTo(i, canvas.height * 0.5 - Math.random() * 80 - 40);
+      ctx.lineTo(i + 50, canvas.height * 0.5 - Math.random() * 60 - 20);
+    }
+    ctx.lineTo(canvas.width, canvas.height * 0.5);
+    ctx.lineTo(canvas.width, canvas.height * 0.6);
+    ctx.lineTo(0, canvas.height * 0.6);
+    ctx.fill();
+
+    // === TREES IN BACKGROUND ===
+    for (let i = 0; i < 8; i++) {
+      const treeX = 100 + i * 120;
+      const treeY = canvas.height * 0.55;
+      ctx.fillStyle = '#2a1a1a';
+      ctx.fillRect(treeX - 5, treeY, 10, 60);
+      ctx.fillStyle = '#1a3a1a';
       ctx.beginPath();
-      ctx.moveTo(i, 0);
+      ctx.moveTo(treeX, treeY - 20);
+      ctx.lineTo(treeX - 20, treeY + 20);
+      ctx.lineTo(treeX + 20, treeY + 20);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // === ARENA FLOOR WITH WOOD TEXTURE ===
+    const floorGradient = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height);
+    floorGradient.addColorStop(0, '#4a3020');
+    floorGradient.addColorStop(1, '#2a1810');
+    ctx.fillStyle = floorGradient;
+    ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+
+    // Wood planks
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < canvas.width; i += 80) {
+      ctx.beginPath();
+      ctx.moveTo(i, canvas.height * 0.6);
       ctx.lineTo(i, canvas.height);
       ctx.stroke();
     }
-    for (let i = 0; i < canvas.height; i += 40) {
+
+    // Horizontal wood texture
+    for (let i = canvas.height * 0.6; i < canvas.height; i += 15) {
+      ctx.strokeStyle = `rgba(60, 40, 20, ${Math.random() * 0.3})`;
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, i);
       ctx.lineTo(canvas.width, i);
       ctx.stroke();
     }
 
-    // Draw arena boundary with glow
+    // === TORCHES ===
+    torchesRef.current.forEach(torch => {
+      torch.flicker = Math.sin(state.battleTime * 10 + torch.x) * 5;
+
+      // Torch pole
+      ctx.fillStyle = '#4a2a1a';
+      ctx.fillRect(torch.x - 5, torch.y - 80, 10, 80);
+
+      // Fire
+      const fireGradient = ctx.createRadialGradient(
+        torch.x, torch.y - 85, 5,
+        torch.x, torch.y - 85, 25 + torch.flicker
+      );
+      fireGradient.addColorStop(0, '#ffff00');
+      fireGradient.addColorStop(0.3, '#ff8800');
+      fireGradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+      ctx.fillStyle = fireGradient;
+      ctx.beginPath();
+      ctx.arc(torch.x, torch.y - 85, 20 + torch.flicker, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Light glow on floor
+      const glowGradient = ctx.createRadialGradient(
+        torch.x, torch.y, 0,
+        torch.x, torch.y, 150
+      );
+      glowGradient.addColorStop(0, 'rgba(255, 180, 100, 0.3)');
+      glowGradient.addColorStop(1, 'rgba(255, 180, 100, 0)');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(torch.x, torch.y, 150, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // === PERMANENT BLOOD STAINS ===
+    bloodStainsRef.current.forEach(stain => {
+      const stainGradient = ctx.createRadialGradient(stain.x, stain.y, 0, stain.x, stain.y, stain.size);
+      stainGradient.addColorStop(0, 'rgba(60, 0, 0, 0.4)');
+      stainGradient.addColorStop(1, 'rgba(60, 0, 0, 0)');
+      ctx.fillStyle = stainGradient;
+      ctx.beginPath();
+      ctx.arc(stain.x, stain.y, stain.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // === ARENA BOUNDARY ===
     ctx.shadowBlur = 20;
     ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
     ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
@@ -168,7 +261,7 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
     ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
     ctx.shadowBlur = 0;
 
-    // Draw center line
+    // Center line
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 2;
     ctx.setLineDash([10, 10]);
@@ -296,9 +389,10 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
     }
 
     // Animation variables (only for living fighters)
-    const walkCycle = Math.sin(battleTime * 8) * 3;
+    const walkCycle = Math.sin(battleTime * 8) * 8; // Increased amplitude for more visible walking
     const breathe = Math.sin(battleTime * 2) * 2;
     const isAttacking = attackCooldown > 0.5;
+    const isMoving = currentAction !== 'idle' && currentAction !== 'defend';
 
     // Direction to opponent
     const facingRight = opponent && opponent.x > x;
@@ -307,76 +401,174 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
     // Shadow (larger and more visible)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.beginPath();
-    ctx.ellipse(x, y + 50, 25, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + 60, 30, 12, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.save();
     ctx.translate(x, y);
 
-    // === BODY ===
+    // === LEGS WITH PROPER KNEES (drawn first, behind body) ===
+    const leftLegWalk = isMoving ? walkCycle : 0;
+    const rightLegWalk = isMoving ? -walkCycle : 0;
+
+    // Left leg (thigh)
+    const leftKneeX = -10 + leftLegWalk * 0.5;
+    const leftKneeY = 18;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-8, 10);
+    ctx.lineTo(leftKneeX, leftKneeY);
+    ctx.stroke();
+
+    // Left leg (shin)
+    const leftFootX = -12 + leftLegWalk;
+    const leftFootY = 50;
+    ctx.beginPath();
+    ctx.moveTo(leftKneeX, leftKneeY);
+    ctx.lineTo(leftFootX, leftFootY);
+    ctx.stroke();
+
+    // Left foot (sandal)
+    ctx.fillStyle = '#8b4513';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(leftFootX, leftFootY, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Right leg (thigh)
+    const rightKneeX = 10 + rightLegWalk * 0.5;
+    const rightKneeY = 18;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(8, 10);
+    ctx.lineTo(rightKneeX, rightKneeY);
+    ctx.stroke();
+
+    // Right leg (shin)
+    const rightFootX = 12 + rightLegWalk;
+    const rightFootY = 50;
+    ctx.beginPath();
+    ctx.moveTo(rightKneeX, rightKneeY);
+    ctx.lineTo(rightFootX, rightFootY);
+    ctx.stroke();
+
+    // Right foot (sandal)
+    ctx.fillStyle = '#8b4513';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(rightFootX, rightFootY, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // === BODY (on top of legs) ===
     ctx.fillStyle = color;
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
 
-    // Torso (larger)
-    ctx.fillRect(-15, -5 + breathe, 30, 35);
-    ctx.strokeRect(-15, -5 + breathe, 30, 35);
+    // Torso (larger, with armor plates)
+    ctx.fillRect(-18, -10 + breathe, 36, 40);
+    ctx.strokeRect(-18, -10 + breathe, 36, 40);
 
-    // Head with helmet
+    // Armor plates (horizontal lines)
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-18, -5 + breathe + i * 10);
+      ctx.lineTo(18, -5 + breathe + i * 10);
+      ctx.stroke();
+    }
+
+    // === HEAD ===
+    ctx.fillStyle = '#f5deb3'; // Skin tone
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(0, -25 + breathe, 18, 0, Math.PI * 2);
+    ctx.arc(0, -30 + breathe, 16, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Helmet ornament
+    // === TRADITIONAL SAMURAI KABUTO HELMET ===
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+
+    // Helmet dome
+    ctx.beginPath();
+    ctx.arc(0, -35 + breathe, 20, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Helmet crest (maedate)
     ctx.fillStyle = '#ffd700';
     ctx.beginPath();
-    ctx.arc(0, -35 + breathe, 6, 0, Math.PI * 2);
+    ctx.moveTo(0, -55 + breathe);
+    ctx.lineTo(-8, -45 + breathe);
+    ctx.lineTo(-6, -35 + breathe);
+    ctx.lineTo(0, -50 + breathe);
+    ctx.lineTo(6, -35 + breathe);
+    ctx.lineTo(8, -45 + breathe);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Eyes
+    // Helmet side plates (fukikaeshi)
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(-20, -25 + breathe);
+    ctx.lineTo(-25, -15 + breathe);
+    ctx.lineTo(-22, -10 + breathe);
+    ctx.lineTo(-18, -20 + breathe);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(20, -25 + breathe);
+    ctx.lineTo(25, -15 + breathe);
+    ctx.lineTo(22, -10 + breathe);
+    ctx.lineTo(18, -20 + breathe);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Face guard (menpo) - lower face mask
+    ctx.fillStyle = '#4a4a4a';
+    ctx.beginPath();
+    ctx.moveTo(-12, -22 + breathe);
+    ctx.lineTo(-10, -15 + breathe);
+    ctx.lineTo(10, -15 + breathe);
+    ctx.lineTo(12, -22 + breathe);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Eyes (visible through helmet)
     ctx.fillStyle = '#fff';
-    ctx.fillRect(-8, -28 + breathe, 5, 5);
-    ctx.fillRect(3, -28 + breathe, 5, 5);
-    ctx.strokeRect(-8, -28 + breathe, 5, 5);
-    ctx.strokeRect(3, -28 + breathe, 5, 5);
+    ctx.beginPath();
+    ctx.ellipse(-7, -28 + breathe, 4, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(7, -28 + breathe, 4, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
 
     // Pupils
     ctx.fillStyle = '#000';
-    ctx.fillRect(-6 + dir, -26 + breathe, 2, 2);
-    ctx.fillRect(5 + dir, -26 + breathe, 2, 2);
-
-    // === LEGS with animation ===
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-
-    // Left leg
     ctx.beginPath();
-    ctx.moveTo(-8, 30);
-    ctx.lineTo(-12 + walkCycle, 55);
-    ctx.stroke();
-
-    // Left foot
-    ctx.beginPath();
-    ctx.arc(-12 + walkCycle, 55, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#333';
+    ctx.arc(-7 + dir, -28 + breathe, 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
-
-    // Right leg
     ctx.beginPath();
-    ctx.moveTo(8, 30);
-    ctx.lineTo(12 - walkCycle, 55);
-    ctx.stroke();
-
-    // Right foot
-    ctx.beginPath();
-    ctx.arc(12 - walkCycle, 55, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#333';
+    ctx.arc(7 + dir, -28 + breathe, 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
 
     // === ARMS ===
     ctx.strokeStyle = '#000';
@@ -587,6 +779,13 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
         gravity: 0.4
       });
     }
+
+    // Create permanent blood stain on the floor
+    bloodStainsRef.current.push({
+      x: x + (Math.random() - 0.5) * 30,
+      y: y + 20 + (Math.random() - 0.5) * 20,
+      size: 15 + Math.random() * 10
+    });
   };
 
   // Create sword clash effect
