@@ -191,7 +191,7 @@ export class BattleFighter {
 
     if (distance < 5) return; // Close enough
 
-    const moveSpeed = this.speed * 60 * deltaTime; // pixels per frame
+    const moveSpeed = this.speed * 150 * deltaTime; // Increased from 60 to 150
     const ratio = Math.min(moveSpeed / distance, 1);
 
     this.x += dx * ratio;
@@ -209,12 +209,12 @@ export class BattleFighter {
     if (distance < 0.1) {
       // Move in random direction
       const angle = Math.random() * Math.PI * 2;
-      this.x += Math.cos(angle) * this.speed * speedMultiplier * 60 * deltaTime;
-      this.y += Math.sin(angle) * this.speed * speedMultiplier * 60 * deltaTime;
+      this.x += Math.cos(angle) * this.speed * speedMultiplier * 150 * deltaTime; // Increased from 60 to 150
+      this.y += Math.sin(angle) * this.speed * speedMultiplier * 150 * deltaTime;
       return;
     }
 
-    const moveSpeed = this.speed * speedMultiplier * 60 * deltaTime;
+    const moveSpeed = this.speed * speedMultiplier * 150 * deltaTime; // Increased from 60 to 150
     const ratio = moveSpeed / distance;
 
     this.x += dx * ratio;
