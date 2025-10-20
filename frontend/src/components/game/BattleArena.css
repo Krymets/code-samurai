@@ -1,0 +1,145 @@
+.battle-arena {
+  position: relative;
+  animation: fadeIn 0.5s ease;
+}
+
+.countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+.countdown-number {
+  font-size: 8rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+  animation: countdownPulse 0.5s ease;
+}
+
+@keyframes countdownPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.arena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.arena-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.btn-back-small {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-back-small:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-5px);
+}
+
+.battle-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.1rem;
+}
+
+.player-side {
+  color: #44ff44;
+  font-weight: bold;
+}
+
+.enemy-side {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.vs {
+  color: #ffd700;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.canvas-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.battle-canvas {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: #0a0a0a;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.battle-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.fighter-stat {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.fighter-stat.player {
+  border-color: rgba(68, 255, 68, 0.5);
+}
+
+.fighter-stat.enemy {
+  border-color: rgba(255, 68, 68, 0.5);
+}
+
+.fighter-stat h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+}
+
+.stat-item {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

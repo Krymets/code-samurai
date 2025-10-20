@@ -1,0 +1,263 @@
+.stats-panel {
+  background: #1a1a2e;
+  border-radius: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  background: #1a1a2e;
+  z-index: 10;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.btn-close {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.panel-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stats-section {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.stats-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: #ffd700;
+}
+
+.level-display {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.level-number {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.title-display {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
+}
+
+.xp-progress {
+  margin-top: 1rem;
+}
+
+.xp-bar {
+  height: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #ffaa00);
+  transition: width 0.5s ease;
+}
+
+.xp-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-box {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.stat-box.win { border-color: rgba(68, 255, 68, 0.3); }
+.stat-box.loss { border-color: rgba(255, 68, 68, 0.3); }
+.stat-box.draw { border-color: rgba(255, 170, 68, 0.3); }
+
+.stat-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.titles-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.title-badge {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.title-badge.active {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  font-weight: bold;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid;
+  border-radius: 6px;
+}
+
+.history-item.player {
+  border-color: #44ff44;
+}
+
+.history-item.enemy {
+  border-color: #ff4444;
+}
+
+.history-item.draw {
+  border-color: #ffaa44;
+}
+
+.history-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.history-item.player .history-icon {
+  background: rgba(68, 255, 68, 0.2);
+  color: #44ff44;
+}
+
+.history-item.enemy .history-icon {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+}
+
+.history-item.draw .history-icon {
+  background: rgba(255, 170, 68, 0.2);
+  color: #ffaa44;
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-opponent {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.history-details {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.data-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-export,
+.btn-reset {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-export {
+  border-color: #44aaff;
+}
+
+.btn-export:hover {
+  background: rgba(68, 170, 255, 0.2);
+}
+
+.btn-reset {
+  border-color: #ff4444;
+}
+
+.btn-reset:hover {
+  background: rgba(255, 68, 68, 0.2);
+}
+
+.data-note {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
