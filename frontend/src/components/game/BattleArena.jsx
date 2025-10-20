@@ -9,6 +9,11 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
   const [battleState, setBattleState] = useState(null);
   const [battleStarted, setBattleStarted] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const particlesRef = useRef([]);
+  const bloodPoolsRef = useRef([]);
+  const clashEffectsRef = useRef([]);
+  const prevHpRef = useRef({ player: 0, enemy: 0 });
+  const prevAliveRef = useRef({ player: true, enemy: true });
 
   // Initialize battle engine
   useEffect(() => {
@@ -65,7 +70,7 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
       setBattleState(state);
 
       // Render
-      render(ctx, canvas, state);
+      render(ctx, canvas, state, deltaTime);
 
       // Check if battle is finished
       if (state.state === BattleState.FINISHED) {
@@ -103,7 +108,35 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
   }, [battleStarted, playerSamurai, playerDeck, opponent, onComplete]);
 
   // Render function
-  const render = (ctx, canvas, state) => {
+  const render = (ctx, canvas, state, deltaTime) => {
+    // Detect HP changes (hits) and trigger blood effects
+    if (prevHpRef.current.player > state.player.hp && state.player.hp > 0) {
+      createBloodSplatter(state.player.x, state.player.y - 10, 15);
+      // Check if defender was blocking
+      if (state.player.defendActive) {
+        createClashEffect(state.player.x, state.player.y);
+      }
+    }
+    if (prevHpRef.current.enemy > state.enemy.hp && state.enemy.hp > 0) {
+      createBloodSplatter(state.enemy.x, state.enemy.y - 10, 15);
+      // Check if defender was blocking
+      if (state.enemy.defendActive) {
+        createClashEffect(state.enemy.x, state.enemy.y);
+      }
+    }
+
+    // Detect death and create blood pool
+    if (prevAliveRef.current.player && !state.player.isAlive) {
+      createBloodPool(state.player.x, state.player.y + 40);
+    }
+    if (prevAliveRef.current.enemy && !state.enemy.isAlive) {
+      createBloodPool(state.enemy.x, state.enemy.y + 40);
+    }
+
+    // Update previous state
+    prevHpRef.current = { player: state.player.hp, enemy: state.enemy.hp };
+    prevAliveRef.current = { player: state.player.isAlive, enemy: state.enemy.isAlive };
+
     // Clear canvas with gradient background
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#1a1a2e');
@@ -145,15 +178,14 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw fighters
-    if (state.player.isAlive) {
-      drawFighter(ctx, state.player, state.enemy, true, state.battleTime);
-    }
-    if (state.enemy.isAlive) {
-      drawFighter(ctx, state.enemy, state.player, false, state.battleTime);
-    }
+    // Draw blood pools FIRST (under fighters)
+    updateParticles(ctx, deltaTime);
 
-    // Draw connection line with distance
+    // Draw fighters (alive or dead)
+    drawFighter(ctx, state.player, state.enemy, true, state.battleTime);
+    drawFighter(ctx, state.enemy, state.player, false, state.battleTime);
+
+    // Draw connection line with distance (only if both alive)
     if (state.player.isAlive && state.enemy.isAlive) {
       const distance = Math.hypot(
         state.enemy.x - state.player.x,
@@ -175,9 +207,95 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
   };
 
   const drawFighter = (ctx, fighter, opponent, isPlayer, battleTime) => {
-    const { x, y, color, hp, maxHp, defendActive, attackCooldown, currentAction } = fighter;
+    const { x, y, color, hp, maxHp, defendActive, attackCooldown, currentAction, isAlive } = fighter;
 
-    // Animation variables
+    // If dead, draw fallen warrior
+    if (!isAlive) {
+      ctx.save();
+      ctx.translate(x, y + 40);
+      ctx.rotate(Math.PI / 2); // Lie down
+
+      // Body (lying down)
+      ctx.fillStyle = color;
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.fillRect(-15, -5, 30, 35);
+      ctx.strokeRect(-15, -5, 30, 35);
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(0, -25, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Helmet ornament
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(0, -35, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Eyes closed (X marks)
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-10, -30);
+      ctx.lineTo(-6, -26);
+      ctx.moveTo(-10, -26);
+      ctx.lineTo(-6, -30);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(6, -30);
+      ctx.lineTo(10, -26);
+      ctx.moveTo(6, -26);
+      ctx.lineTo(10, -30);
+      ctx.stroke();
+
+      // Limbs
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+
+      // Arms
+      ctx.beginPath();
+      ctx.moveTo(-15, 5);
+      ctx.lineTo(-25, 15);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(15, 5);
+      ctx.lineTo(25, 15);
+      ctx.stroke();
+
+      // Legs
+      ctx.beginPath();
+      ctx.moveTo(-8, 30);
+      ctx.lineTo(-15, 50);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(8, 30);
+      ctx.lineTo(15, 50);
+      ctx.stroke();
+
+      // Sword dropped nearby
+      ctx.save();
+      ctx.translate(40, 10);
+      ctx.rotate(-0.3);
+      const swordGradient = ctx.createLinearGradient(0, 0, 40, 0);
+      swordGradient.addColorStop(0, '#c0c0c0');
+      swordGradient.addColorStop(0.5, '#ffffff');
+      swordGradient.addColorStop(1, '#999999');
+      ctx.fillStyle = swordGradient;
+      ctx.fillRect(0, -3, 45, 6);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, -3, 45, 6);
+      ctx.restore();
+
+      ctx.restore();
+      return; // Skip rest of drawing
+    }
+
+    // Animation variables (only for living fighters)
     const walkCycle = Math.sin(battleTime * 8) * 3;
     const breathe = Math.sin(battleTime * 2) * 2;
     const isAttacking = attackCooldown > 0.5;
@@ -454,6 +572,112 @@ function BattleArena({ playerSamurai, playerDeck, opponent, onComplete, onBack }
       canvas.width / 2,
       40
     );
+  };
+
+  // Create blood particles on hit
+  const createBloodSplatter = (x, y, count = 15) => {
+    for (let i = 0; i < count; i++) {
+      particlesRef.current.push({
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 0.5) * 8 - 2,
+        size: Math.random() * 4 + 2,
+        life: 1.0,
+        gravity: 0.4
+      });
+    }
+  };
+
+  // Create sword clash effect
+  const createClashEffect = (x, y) => {
+    clashEffectsRef.current.push({
+      x,
+      y,
+      life: 0.5,
+      size: 30
+    });
+  };
+
+  // Create blood pool when dead
+  const createBloodPool = (x, y) => {
+    bloodPoolsRef.current.push({
+      x,
+      y,
+      size: 0,
+      maxSize: 60,
+      growing: true
+    });
+  };
+
+  // Update and draw particles
+  const updateParticles = (ctx, deltaTime) => {
+    // Update particles
+    particlesRef.current = particlesRef.current.filter(p => {
+      p.vy += p.gravity;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= deltaTime * 2;
+
+      if (p.life > 0) {
+        ctx.fillStyle = `rgba(139, 0, 0, ${p.life})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        return true;
+      }
+      return false;
+    });
+
+    // Update clash effects
+    clashEffectsRef.current = clashEffectsRef.current.filter(c => {
+      c.life -= deltaTime * 3;
+      if (c.life > 0) {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${c.life * 2})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Sparks
+        for (let i = 0; i < 4; i++) {
+          const angle = (c.life * 10 + i * Math.PI / 2);
+          const dist = c.size;
+          ctx.fillStyle = `rgba(255, 200, 100, ${c.life * 2})`;
+          ctx.beginPath();
+          ctx.arc(
+            c.x + Math.cos(angle) * dist,
+            c.y + Math.sin(angle) * dist,
+            3,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        return true;
+      }
+      return false;
+    });
+
+    // Update blood pools
+    bloodPoolsRef.current.forEach(pool => {
+      if (pool.growing && pool.size < pool.maxSize) {
+        pool.size += deltaTime * 50;
+        if (pool.size >= pool.maxSize) {
+          pool.growing = false;
+        }
+      }
+
+      // Draw blood pool
+      const gradient = ctx.createRadialGradient(pool.x, pool.y, 0, pool.x, pool.y, pool.size);
+      gradient.addColorStop(0, 'rgba(100, 0, 0, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(80, 0, 0, 0.6)');
+      gradient.addColorStop(1, 'rgba(60, 0, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(pool.x, pool.y, pool.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
   };
 
   return (
